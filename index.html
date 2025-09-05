@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบสุ่มใบงานสมการกำลังสอง</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Sarabun', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .hidden { display: none; }
+
+    /* --- Login Page --- */
+    #loginPage {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      gap: 15px;
+    }
+    #loginPage h2 { color: white; font-size: 2em; }
+    #loginPage input {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    #loginPage button {
+      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #loginMessage { color: #ffcccc; font-weight: bold; }
+
+    /* --- Control Panel + Worksheets --- */
+    .control-panel {
+      max-width: 800px; margin: 0 auto 20px; background: white;
+      border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .control-panel h2 { color: #6c5ce7; margin-bottom: 20px; text-align: center; font-size: 1.8em; }
+    .input-group { display: flex; gap: 15px; justify-content: center; margin-bottom: 20px; }
+    .input-group input { padding: 10px; border: 2px solid #ddd; border-radius: 8px; width: 100px; text-align: center; }
+    .generate-btn {
+      background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+      color: white; border: none; padding: 12px 30px; border-radius: 25px; font-weight: 600;
+    }
+
+    .worksheets-container { max-width: 800px; margin: 0 auto; }
+    .worksheet {
+      background: white; margin-bottom: 30px; border-radius: 15px; overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1); page-break-after: always;
+    }
+    .worksheet-header { background: #4facfe; color: white; text-align: center; padding: 20px; }
+    .worksheet-content { padding: 30px; }
+    .problem { background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px;
+      padding: 25px; margin-bottom: 25px; min-height: 320px; }
+    .problem-number { background: #6c5ce7; color: white; width: 30px; height: 30px;
+      border-radius: 50%; text-align: center; line-height: 30px; margin-bottom: 15px; }
+    .equation { font-size: 1.6em; font-family: 'Courier New', monospace; text-align: center; margin: 15px 0; }
+    .solution-space { border: 2px dashed #bbb; border-radius: 8px; min-height: 200px; padding: 20px; }
+
+    .print-btn {
+      position: fixed; bottom: 30px; right: 30px;
+      background: #00b894; color: white; border: none; padding: 15px 20px;
+      border-radius: 50px; font-size: 14px; cursor: pointer;
+    }
+
+    @media print {
+      body { background: white; padding: 0; }
+      .control-panel, .print-btn { display: none; }
+      .worksheet { margin: 0; box-shadow: none; page-break-after: always; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Login Page -->
+  <div id="loginPage">
+    <h2>🔐 เข้าสู่ระบบ</h2>
+    <input type="password" id="passwordInput" placeholder="รหัสผ่าน">
+    <button onclick="login()">เข้าสู่ระบบ</button>
+    <div id="loginMessage"></div>
+  </div>
+
+  <!-- Main System -->
+  <div id="mainPage" class="hidden">
+    <div class="control-panel">
+      <h2>🎲 ระบบสุ่มใบงานสมการกำลังสอง</h2>
+      <div class="input-group">
+        <label for="worksheetCount">จำนวนใบงาน:</label>
+        <input type="number" id="worksheetCount" value="1" min="1" max="10">
+        <button class="generate-btn" onclick="generateWorksheets()">🎯 สร้างใบงาน</button>
+      </div>
+    </div>
+
+    <div class="worksheets-container" id="worksheetsContainer"></div>
+    <button class="print-btn" onclick="window.print()" id="printBtn" style="display:none;">🖨️ พิมพ์</button>
+  </div>
+
+  <script>
+    const PASSWORD = "1234"; // 🔑 รหัสผ่าน
+
+    // --- ระบบ Login ---
+    function login() {
+      const pass = document.getElementById("passwordInput").value;
+      const msg = document.getElementById("loginMessage");
+      if (pass === PASSWORD) {
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("mainPage").classList.remove("hidden");
+      } else {
+        msg.textContent = "❌ รหัสผ่านไม่ถูกต้อง!";
+      }
+    }
+
+    // --- สร้างสมการกำลังสองสมบูรณ์ ---
+    function generatePerfectSquareEquation() {
+      let h;
+      do { h = Math.floor(Math.random() * 21) - 10; } while (h === 0);
+      const b = 2 * h;
+      const c = h * h;
+      let equationStr;
+      if (b > 0) equationStr = `x² + ${b}x + ${c} = 0`;
+      else equationStr = `x² ${b}x + ${c} = 0`;
+      return equationStr;
+    }
+
+    // --- สร้างใบงาน (2 ข้อ/หน้า) ---
+    function createWorksheet(number) {
+      const eq1 = generatePerfectSquareEquation();
+      const eq2 = generatePerfectSquareEquation();
+      const worksheet = document.createElement("div");
+      worksheet.className = "worksheet";
+      worksheet.innerHTML = `
+        <div class="worksheet-header">
+          <h3>ใบงานสมการกำลังสอง ชุดที่ ${number}</h3>
+        </div>
+        <div class="worksheet-content">
+          <div class="problem">
+            <div class="problem-number">1</div>
+            <div class="equation">${eq1}</div>
+            <div class="solution-space"></div>
+          </div>
+          <div class="problem">
+            <div class="problem-number">2</div>
+            <div class="equation">${eq2}</div>
+            <div class="solution-space"></div>
+          </div>
+        </div>
+      `;
+      return worksheet;
+    }
+
+    function generateWorksheets() {
+      const count = parseInt(document.getElementById("worksheetCount").value) || 1;
+      const container = document.getElementById("worksheetsContainer");
+      container.innerHTML = "";
+      for (let i = 0; i < count; i++) {
+        container.appendChild(createWorksheet(i + 1));
+      }
+      document.getElementById("printBtn").style.display = "block";
+    }
+  </script>
+</body>
+</html>
